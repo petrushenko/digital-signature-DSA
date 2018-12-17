@@ -1,25 +1,89 @@
 from math import sqrt
 from random import randint
 from hashlib import sha1
+from math import log
 
+#define
 
-def dsa_file_sign(*, p, q, g, h, k, x, filename):
+def bytes_needed(n):
+    if n == 0:
+        return 1
+    return int(log(n, 256)) + 1
+
+def dsa_check_file_sign(*, p, q, h, y, filename):
+    #check input values
+    if (not (is_prime(q) and is_prime(p))):
+        return 1
+    if (not ((p - 1) % q == 0)):
+        return 2
+    if (not (h in range(1, p - 1))):
+        return 3
+
+    f = open(filename)
+
+    all_data = f.read()
+
+    f.close()
+
+    split_data = all_data.split('|')
+
+    data = split_data[0]
+
+    my_hash = get_sha1(data)
+    print(my_hash)
+    my_hash = int(my_hash, 16)
+    r = int(split_data[1])
+    s = int(split_data[2])
+
+    w = fast_pow(s, q - 2, q)
+
+    u1 = (my_hash * w) % q
+
+    u2 = (r * w) % q
+
+    g = fast_pow(h, (p-1) // q, p)
+    v = ( ( fast_pow(g, u1, p) * fast_pow(y, u2, p) ) % p) % q
+
+    if r == v:
+        return True
+    else: 
+        return False
+
+def dsa_file_sign(*, p, q, h, k, x, filename):
+    '''
+    DSA sign 
+    '''
+
+    #init values
+
+    g = fast_pow(h, (p-1) // q, p)
+
+    print("h = {h}, g = {g}".format(h = h, g = g))
+
     err = check_values(q = q, p = p, g = g, h = h, x = x, k = k)
     if (not err):
+        
+        #Output open key y
+        y = fast_pow(g, x, p)
+        print("y = {y}".format(y = y))
+
         f = open(filename, "r")
         data = f.read()
 
+        #data = data.encode("utf-8")
         f.close()
-        data.encode("utf-8")
 
         my_hash = get_sha1(data)
+        print(my_hash)
+        my_hash = int(my_hash, 16)
+        print(bytes_needed(my_hash))
 
         r = (fast_pow(g, k, p) % q)
 
-        s = fast_pow(k, q-2, q) * (my_hash + x * r) % q
+        s = (fast_pow(k, q-2, q) * (my_hash + x * r)) % q
 
         if (r != 0 and s != 0):
-            f = open(filename, "w")
+            f = open(filename, "r")
 
             data = f.read()
             f.close()
@@ -29,12 +93,8 @@ def dsa_file_sign(*, p, q, g, h, k, x, filename):
             f.close()
             return (data, r, s)
         else:
-            return -1
-    return err
-
-
-    
-
+            return (-1, -1, -1)
+    return (err, err, err)  
 
 def fast_pow(num, power, mod):
     '''
@@ -46,14 +106,14 @@ def fast_pow(num, power, mod):
     # (b ^ k) * p = num ^ power
     while power > 0:
         while power % 2 == 0:
-            power /= 2
+            power //= 2
             num = (num * num) % mod
         power -= 1
         res = (res * num) % mod
     return res      
 
 
-def is_prime(num, k = 30):
+def is_prime(num, k = 50):
     '''
     Вероятностная проверка числа на простоту
     Алгоритм Миллера-Рабина
@@ -65,19 +125,15 @@ def is_prime(num, k = 30):
     if(num < 2):
         return False
 
-    if(num == 2):
-        return True
-
     # n - 1 = 2^s * t
     s = 0
     t = num - 1
     while (t % 2 != 1):
-        t /= 2
+        t //= 2
         s += 1
-    t = int(t)
 
     flag = True # flag == False - переход на следующие проверку
-    for i in range (1, k):
+    for i in range (k):
         a = randint(2, num - 1)
         x = fast_pow(a, t, num)
         if (x == 1 or x == num - 1):
@@ -94,14 +150,35 @@ def is_prime(num, k = 30):
             return False # составное
     return True
 
+def isPrime(n, k=5): # miller-rabin
+    from random import randint
+    if n < 2: return False
+    for p in [2,3,5,7,11,13,17,19,23,29]:
+        if n % p == 0: return n == p
+    s, d = 0, n-1
+    while d % 2 == 0:
+        s, d = s+1, d/2
+    for i in range(k):
+        a = randint(2, n - 1)
+        x = fast_pow(a, d, n)
+        if x == 1 or x == n-1: continue
+        for r in range(1, s):
+            x = (x * x) % n
+            if x == 1: return False
+            if x == n-1: break
+        else: return False
+    return True
+
 def check_values(q, p, g, h, x, k):
+    if (bytes_needed(q) < 20):
+        return 1
     if (not is_prime(q)):
         return 1
-    if (not ((p - 1) % q == 0)):
+    if (not (((p - 1) % q == 0) and is_prime(p))):
         return 2
     if (not (h in range(1, p - 1))):
         return 3
-    if (not (g == fast_pow(h, (p-1) / q, p))):
+    if (not ((g > 1) and (g == fast_pow(h, (p-1) // q, p)))):
         return 4
     if (not (0 < x < q)):
         return 5
@@ -177,11 +254,5 @@ def get_sha1(data):
            h4 = h4 + e & 0xffffffff
 
        return '%08x%08x%08x%08x%08x' % (h0, h1, h2, h3, h4)
-hash_ = sha1("Hello, world".encode("utf-8"))
-my_hash = hash_.hexdigest()
-print(my_hash)
-print(get_sha1("Hello, world"))
-
-
 
     
