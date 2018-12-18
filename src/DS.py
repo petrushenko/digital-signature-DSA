@@ -1,8 +1,23 @@
+'''
+    DIGITAL SIGNATURE ON BASE DSA
+
+
+    ERROR CODES:
+    1 - error in q
+    2 - error in p
+    3 - error in h
+    4 - error in g
+    5 - error in x
+   -1 - try new k
+   100 - error in getting R or S
+
+   
+    КОДЫ ОШИБОК СМОТРЕТЬ В README.md
+'''
+
 from math import sqrt
 from random import randint
 from math import log
-
-#define
 
 def is_number(num):
     '''
@@ -96,6 +111,7 @@ def dsa_file_sign(*, p, q, h, k, x, filename):
         
         #Output open key y
         y = fast_pow(g, x, p)
+        print(y)
 
         f = open(filename, "r")
         data = f.read()
@@ -106,6 +122,7 @@ def dsa_file_sign(*, p, q, h, k, x, filename):
         my_hash = get_sha1(data)
         hash_to_out = my_hash    
         my_hash = int(my_hash, 16)
+        print("SHA-1(10) = {}".format(my_hash))
 
         r = (fast_pow(g, k, p) % q)
 

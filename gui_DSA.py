@@ -1,5 +1,11 @@
+'''
+    GUI IMPLEMENTATION OF DIGITAL SIGNATURE ON BASE DSA
+
+'''
+
 from tkinter import *
 from src.DS import *
+
 #const
 btn_width = 100 
 btn_height = 40 
