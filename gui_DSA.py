@@ -203,7 +203,7 @@ def check_frame():
             show_error(3)
             return
         y = y_enter.get()
-        if is_number(k):
+        if is_number(y):
             y = int(y) 
         else: 
             y = 0
@@ -327,8 +327,6 @@ def show_error(err):
         _show_error(err_open)
     if err == 100:
         _show_error("Error in getting R or S...\nMay be problen in symbol '|' ")
-
-
 
 if __name__ == "__main__":
     main()

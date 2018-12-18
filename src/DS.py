@@ -33,8 +33,10 @@ def dsa_check_file_sign(*, p, q, h, y, filename):
       0 - подпись успешно прошла проверку
     '''
     #check input values
-    if (not (is_prime(q) and is_prime(p))):
+    if (not (is_prime(q))):
         return 1
+    if (not (is_prime(p))):
+        return 2
     if (not ((p - 1) % q == 0)):
         return 2
     if (not (h in range(1, p - 1))):
