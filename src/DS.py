@@ -12,7 +12,7 @@
    100 - error in getting R or S
 
    
-    КОДЫ ОШИБОК СМОТРЕТЬ В README.md
+    
 '''
 
 from math import sqrt
